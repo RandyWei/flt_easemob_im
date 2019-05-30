@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
+import 'emerror.dart';
+
 class FltEasemobIm {
   static const MethodChannel _channel = const MethodChannel('bughub.dev/flt_easemob_im');
 

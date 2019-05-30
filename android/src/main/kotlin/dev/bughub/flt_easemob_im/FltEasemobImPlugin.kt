@@ -5,6 +5,8 @@ import android.text.TextUtils
 import android.util.Log
 import com.chinahrt.flutter_plugin_demo.QueuingEventSink
 import com.hyphenate.EMCallBack
+import com.hyphenate.EMConnectionListener
+import com.hyphenate.EMError
 import com.hyphenate.chat.EMClient
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -17,6 +19,7 @@ class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
 
     val loginEventSink = QueuingEventSink()
     val logoutEventSink = QueuingEventSink()
+    val connectionEventSink = QueuingEventSink()
 
     companion object {
         @JvmStatic
@@ -24,6 +27,16 @@ class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
             val plugin = FltEasemobImPlugin(registrar)
             val channel = MethodChannel(registrar.messenger(), "bughub.dev/flt_easemob_im")
             channel.setMethodCallHandler(plugin)
+
+            EventChannel(registrar.messenger(), "bughub.dev/flt_easemob_im/events:connection").setStreamHandler(object : EventChannel.StreamHandler {
+                override fun onListen(o: Any?, sink: EventChannel.EventSink?) {
+                    plugin.connectionEventSink.setDelegate(sink)
+                }
+
+                override fun onCancel(o: Any?) {
+                    plugin.connectionEventSink.setDelegate(null)
+                }
+            })
 
             EventChannel(registrar.messenger(), "bughub.dev/flt_easemob_im/events:login").setStreamHandler(object : EventChannel.StreamHandler {
                 override fun onListen(o: Any?, sink: EventChannel.EventSink?) {
@@ -106,6 +119,19 @@ class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
                 // 是否自动下载附件类消息的缩略图等，默认为 true 这里和上边这个参数相关联
                 options.isAutodownload = true
                 initSDK(registrar.context(), options, debugMode = true)
+
+                EMClient.getInstance().addConnectionListener(object :EMConnectionListener{
+                    override fun onConnected() {
+                        val eventResult = HashMap<String, Any>()
+                        eventResult["event"] = "onConnected"
+                        connectionEventSink.success(eventResult)
+                    }
+
+                    override fun onDisconnected(errorCode: Int) {
+                        connectionEventSink.error(errorCode.toString(),message = "",details = "")
+                    }
+
+                })
             }
             call.method == "createAccount" -> {
                 val username = call.argument<String>("username")
