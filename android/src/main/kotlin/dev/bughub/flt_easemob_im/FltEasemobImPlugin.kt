@@ -16,6 +16,7 @@ import io.flutter.plugin.common.PluginRegistry.Registrar
 class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
 
     val loginEventSink = QueuingEventSink()
+    val logoutEventSink = QueuingEventSink()
 
     companion object {
         @JvmStatic
@@ -24,8 +25,7 @@ class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
             val channel = MethodChannel(registrar.messenger(), "bughub.dev/flt_easemob_im")
             channel.setMethodCallHandler(plugin)
 
-            val eventChannel = EventChannel(registrar.messenger(), "bughub.dev/flt_easemob_im/events:login")
-            eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
+            EventChannel(registrar.messenger(), "bughub.dev/flt_easemob_im/events:login").setStreamHandler(object : EventChannel.StreamHandler {
                 override fun onListen(o: Any?, sink: EventChannel.EventSink?) {
                     plugin.loginEventSink.setDelegate(sink)
                 }
@@ -34,6 +34,17 @@ class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
                     plugin.loginEventSink.setDelegate(null)
                 }
             })
+
+            EventChannel(registrar.messenger(), "bughub.dev/flt_easemob_im/events:logout").setStreamHandler(object : EventChannel.StreamHandler {
+                override fun onListen(o: Any?, sink: EventChannel.EventSink?) {
+                    plugin.logoutEventSink.setDelegate(sink)
+                }
+
+                override fun onCancel(o: Any?) {
+                    plugin.logoutEventSink.setDelegate(null)
+                }
+            })
+
         }
 
         @JvmStatic
@@ -79,14 +90,14 @@ class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
             EMClient.getInstance().setDebugMode(debugMode)
 
 
-            Log.i("Plugin","initSDK finished")
+            Log.i("Plugin", "initSDK finished")
         }
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
 
         when {
-            call.method == "initSDK"->{
+            call.method == "initSDK" -> {
                 val options = EMOptions()
                 // 默认添加好友时，是不需要验证的，改成需要验证
                 options.acceptInvitationAlways = false
@@ -114,7 +125,7 @@ class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
             }
             call.method == "login" -> {
 
-                Log.i("Plugin","login")
+                Log.i("Plugin", "login")
 
                 val username = call.argument<String>("username")
                 val password = call.argument<String>("password")
@@ -128,7 +139,6 @@ class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
                     result.error("500", "the password is invalid", null)
                     return
                 }
-
 
                 EMClient.getInstance().login(username, password, object : EMCallBack {
                     override fun onSuccess() {
@@ -147,8 +157,38 @@ class FltEasemobImPlugin(var registrar: Registrar) : MethodCallHandler {
                     override fun onError(code: Int, error: String?) {
                         val eventResult = HashMap<String, Any>()
                         eventResult["event"] = "error"
-                        loginEventSink.error(code.toString(),message = (error?:""),details = "")
+                        loginEventSink.error(code.toString(), message = (error ?: ""), details = "")
                     }
+                })
+                result.success(null)
+            }
+            call.method == "logout" -> {
+                val unbindToken = call.argument<Boolean>("unbindToken")?:false
+                EMClient.getInstance().logout(unbindToken)
+                result.success(null)
+            }
+            call.method == "logoutAysnc" -> {
+                val unbindToken = call.argument<Boolean>("unbindToken")?:false
+                EMClient.getInstance().logout(unbindToken,object :EMCallBack{
+                    override fun onSuccess() {
+                        val eventResult = HashMap<String, Any>()
+                        eventResult["event"] = "success"
+                        logoutEventSink.success(eventResult)
+                    }
+
+                    override fun onProgress(progress: Int, status: String?) {
+                        val eventResult = HashMap<String, Any>()
+                        eventResult["event"] = "progress"
+                        eventResult["status"] = "status"
+                        logoutEventSink.success(eventResult)
+                    }
+
+                    override fun onError(code: Int, error: String?) {
+                        val eventResult = HashMap<String, Any>()
+                        eventResult["event"] = "error"
+                        logoutEventSink.error(code.toString(), message = (error ?: ""), details = "")
+                    }
+
                 })
                 result.success(null)
             }
