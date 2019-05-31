@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
+import 'chattype.dart';
 import 'emerror.dart';
 
 class FltEasemobIm {
