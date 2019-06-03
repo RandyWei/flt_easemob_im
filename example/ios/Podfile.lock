@@ -6,9 +6,11 @@ PODS:
     - AMapFoundation (~> 1.4)
   - flt_easemob_im (0.0.1):
     - Flutter
+    - Hyphenate
   - Flutter (1.0.0):
     - AMap3DMap
     - AMapSearch
+  - Hyphenate (3.5.2)
 
 DEPENDENCIES:
   - flt_easemob_im (from `.symlinks/plugins/flt_easemob_im/ios`)
@@ -19,6 +21,7 @@ SPEC REPOS:
     - AMap3DMap
     - AMapFoundation
     - AMapSearch
+    - Hyphenate
 
 EXTERNAL SOURCES:
   flt_easemob_im:
@@ -30,8 +33,9 @@ SPEC CHECKSUMS:
   AMap3DMap: 37425c7d47420cbfaee88328be3dc3781814b999
   AMapFoundation: 20fce2a12cd152e1092afdd04379cdac21932185
   AMapSearch: def5983c8ca1a6d7430970046dc814f6e337621d
-  flt_easemob_im: 07fb77a397305afb079f3cd0da62a126669b075b
+  flt_easemob_im: f6bc007df33b713d12df70fc2ce3b9e22e8bc6b1
   Flutter: eac8f506f14c84f31da3c65b1b4ca3347b773ed9
+  Hyphenate: 55a0b19d2df1d79ed376e15f3a9ab1b0b2a901ee
 
 PODFILE CHECKSUM: aff02bfeed411c636180d6812254b2daeea14d09
 
